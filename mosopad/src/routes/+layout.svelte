@@ -14,7 +14,7 @@
 
 	<footer>
 		<p>
-			My GitHub: <a href="https://github.com/MihneaMoso">MihneaMoso</a>
+			Made by <a href="https://github.com/MihneaMoso">MihneaMoso</a> with ❤️
 		</p>
 	</footer>
 </div>

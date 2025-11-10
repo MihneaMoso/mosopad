@@ -12,7 +12,7 @@
 		Welcome to Mosopad!
 	</h1>
 	<h2>
-		Create your very own pad here: <input type="text" bind:value={padInput}>
+		Create your very own pad here: <br> <input id="padinput" type="text" bind:value={padInput}>
 	</h2>
 
 	<h2>
@@ -24,5 +24,8 @@
 </main>
 
 <style>
+	#padinput {
+		
+	}
     
 </style>

@@ -4,7 +4,7 @@ const path = await import("node:path");
 const { execFile } = await import("node:child_process");
 const { promisify } = await import("node:util");
 
-export async function compile(rawContent: string) {
+export async function compile(rawContent: string, optimizationLevel: string, options: string[]) {
     let data = {
         compile: { stdout: "", stderr: "" },
         run: {stdout: "", stderr: ""},
@@ -30,7 +30,7 @@ export async function compile(rawContent: string) {
         try {
             const { stdout, stderr } = await execFileAsync(
                 "g++",
-                [srcPath, "-O2", "-std=c++17", "-o", outPath],
+                [srcPath, optimizationLevel, ...options, "-o", outPath],
                 {
                     timeout: 15000,
                     windowsHide: true,

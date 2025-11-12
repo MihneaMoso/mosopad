@@ -1,15 +1,51 @@
+// import { FILE } from "node:dns";
 import fs from "node:fs/promises";
 const os = await import("node:os");
 const path = await import("node:path");
 const { execFile } = await import("node:child_process");
 const { promisify } = await import("node:util");
 
-export async function compile(rawContent: string, optimizationLevel: string, options: string[]) {
+const LIMITS = {
+    FILE_SIZE: 100_000, // 100KB
+    LINE_COUNT: 5000, // Max lines
+    COMPILE_TIME: 15_000, // 15 seconds
+    RUN_TIME: 5_000, // 5 seconds
+};
+
+export async function compile(
+    rawContent: string,
+    optimizationLevel: string,
+    options: string[]
+) {
     let data = {
         compile: { stdout: "", stderr: "" },
-        run: {stdout: "", stderr: ""},
+        run: { stdout: "", stderr: "" },
         error: "",
     };
+
+    // limit file size
+    if (!rawContent || typeof rawContent !== "string") {
+        data.error = "invalid_input";
+        data.compile.stderr = "No code provided";
+        return data;
+    }
+
+    const contentSize = Buffer.byteLength(rawContent, "utf-8");
+    if (contentSize > LIMITS.FILE_SIZE) {
+        data.error = "file_too_large";
+        data.compile.stderr = `File size (${contentSize} bytes) exceeds limit of ${(
+            LIMITS.FILE_SIZE / 1024
+        ).toFixed(1)}KB.`;
+        return data;
+    }
+
+    const lineCount = rawContent.split("\n").length;
+    if (lineCount > LIMITS.LINE_COUNT) {
+        data.error = "too_many_lines";
+        data.compile.stderr = `Code has ${lineCount} lines, limit is ${LIMITS.LINE_COUNT}`;
+        return data;
+    }
+
     const execFileAsync = promisify(execFile);
 
     let tmpDir: string | undefined;
@@ -32,7 +68,7 @@ export async function compile(rawContent: string, optimizationLevel: string, opt
                 "g++",
                 [srcPath, optimizationLevel, ...options, "-o", outPath],
                 {
-                    timeout: 15000,
+                    timeout: LIMITS.COMPILE_TIME,
                     windowsHide: true,
                 }
             );
@@ -51,7 +87,7 @@ export async function compile(rawContent: string, optimizationLevel: string, opt
             try {
                 const { stdout, stderr } = await execFileAsync(outPath, [], {
                     cwd: tmpDir,
-                    timeout: 5000,
+                    timeout: LIMITS.RUN_TIME,
                     windowsHide: true,
                 });
                 data.run.stdout = stdout ?? "";

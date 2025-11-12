@@ -8,6 +8,27 @@
     let editorContainer: HTMLElement;
     let editor: any;
 
+    
+    console.log("Data:", data);
+
+    let compilerOptions = $state(data.compilerOptions.slice(1).join(" "));
+    let optimizationLevel = $state(data.compilerOptions[0]);
+
+    // const languages = ["CPP", "Javascript", "Python"];
+    // const normalized = data.language?.toLowerCase();
+    // let selectedLanguage = $state(
+    //     languages.find((l) => l.toLowerCase() === normalized) ?? "CPP"
+    // );
+    let selectedLanguage = $state(data.language);
+
+    let textareaContent = $state(data.editorContent ?? "");
+    let lastSavedContent = $state(textareaContent);
+
+    let compilationOutput = $state("");
+    let error = $state("");
+
+    const dirty = $derived(textareaContent !== lastSavedContent);
+
     onMount(async () => {
         const monaco = await import("monaco-editor");
 
@@ -25,13 +46,13 @@
         let model = monaco.editor.getModel(uri);
         if (!model) {
             model = monaco.editor.createModel(
-                data.editorContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}',
+                textareaContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}',
                 'cpp',
                 uri
             );
         } else {
             // Update existing model content
-            model.setValue(data.editorContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}');
+            model.setValue(textareaContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}');
         }
 
         // Create editor instance
@@ -57,25 +78,6 @@
         };
     });
 
-    console.log("Data:", data);
-
-    let compilerOptions = $state(data.compilerOptions.slice(1).join(" "));
-    let optimizationLevel = $state(data.compilerOptions[0]);
-
-    // const languages = ["CPP", "Javascript", "Python"];
-    // const normalized = data.language?.toLowerCase();
-    // let selectedLanguage = $state(
-    //     languages.find((l) => l.toLowerCase() === normalized) ?? "CPP"
-    // );
-    let selectedLanguage = $state(data.language);
-
-    let textareaContent = $state(data.editorContent ?? "");
-    let lastSavedContent = $state(textareaContent);
-
-    let compilationOutput = $state("");
-    let error = $state("");
-
-    const dirty = $derived(textareaContent !== lastSavedContent);
 
     $effect(() => {
         const handler = (e: BeforeUnloadEvent) => {

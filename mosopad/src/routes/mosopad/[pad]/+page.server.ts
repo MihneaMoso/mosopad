@@ -85,7 +85,7 @@ function getEditorData(padName: string) {
 int main() {
     std::cout << "Hello, World!";
     return 0;
-}   `,
+}`,
         language: "CPP",
         compilerOptions: ["-O1", "-Wall", "-Wextra"],
     };

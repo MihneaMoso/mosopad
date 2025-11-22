@@ -3,6 +3,7 @@
     import { beforeNavigate } from "$app/navigation";
     import { onMount } from "svelte";
     import type { PageProps } from "./$types";
+    import { content } from "../../../stores/content";
     let { data, form }: PageProps = $props();
 
     let editorContainer: HTMLElement;
@@ -11,23 +12,26 @@
     
     console.log("Data:", data);
 
-    let compilerOptions = $state(data.compilerOptions.slice(1).join(" "));
-    let optimizationLevel = $state(data.compilerOptions[0]);
-
-    // const languages = ["CPP", "Javascript", "Python"];
-    // const normalized = data.language?.toLowerCase();
-    // let selectedLanguage = $state(
-    //     languages.find((l) => l.toLowerCase() === normalized) ?? "CPP"
-    // );
-    let selectedLanguage = $state(data.language);
-
-    let textareaContent = $state(data.editorContent ?? "");
+    // Initialize from store if available, otherwise from server data
+    let compilerOptions = $state($content.compilerOptions || data.compilerOptions.slice(1).join(" "));
+    let optimizationLevel = $state($content.optimizationLevel || data.compilerOptions[0]);
+    let selectedLanguage = $state($content.selectedLanguage || data.language);
+    let textareaContent = $state($content.textareaContent || (data.editorContent ?? ""));
     let lastSavedContent = $state(textareaContent);
-
-    let compilationOutput = $state("");
-    let error = $state("");
+    let compilationOutput = $state($content.compilationOutput || "");
+    let error = $state($content.error || "");
 
     const dirty = $derived(textareaContent !== lastSavedContent);
+
+    // Sync state changes back to store
+    $effect(() => {
+        $content.compilationOutput = compilationOutput;
+        $content.compilerOptions = compilerOptions;
+        $content.error = error;
+        $content.selectedLanguage = selectedLanguage;
+        $content.optimizationLevel = optimizationLevel;
+        $content.textareaContent = textareaContent;
+    });
 
     onMount(async () => {
         const monaco = await import("monaco-editor");
@@ -40,26 +44,26 @@
             monaco.languages.register({ id: "typescript" });
         }
 
+        // example file
         const uri = monaco.Uri.parse('file:///main.cpp');
         
         // Get or create model
         let model = monaco.editor.getModel(uri);
         if (!model) {
             model = monaco.editor.createModel(
-                textareaContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}',
+                textareaContent,
                 'cpp',
                 uri
             );
         } else {
-            // Update existing model content
-            model.setValue(textareaContent ?? '#include <iostream>\nint main() {\n    std::cout << "Hello, World!";\n    return 0;\n}');
+            model.setValue(textareaContent);
         }
 
         // Create editor instance
         editor = monaco.editor.create(editorContainer, {
             model: model,
             theme: 'vs-dark',
-            automaticLayout: true, // Auto-resize
+            automaticLayout: true,
             minimap: { enabled: false },
             fontSize: 14,
             lineNumbers: 'on',
@@ -89,7 +93,8 @@
         window.addEventListener("beforeunload", handler);
         
         if (form?.output?.error) {
-            error = form?.output.compile.stderr ?? "";
+       
+             error = form?.output.compile.stderr ?? "";
             compilationOutput = form?.output.error ?? "";
         } else {
             compilationOutput = form?.output?.run?.stdout ?? "";

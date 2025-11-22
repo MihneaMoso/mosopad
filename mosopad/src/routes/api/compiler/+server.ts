@@ -2,9 +2,15 @@ import { error, json, text } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { compile } from "./compilecpp";
 
+export interface serverCompileData {
+  textareaContent: string,
+  optimizationLevel: string,
+  compilerFlags: string[],
+}
+
 
 export const POST: RequestHandler = async ({ request, url }) => {
-    const data = await request.json();
+    const data: serverCompileData = await request.json();
 
     const rawContent: string = data.textareaContent;
     const optimizationLevel: string = data.optimizationLevel;

@@ -12,19 +12,37 @@ const LIMITS = {
     RUN_TIME: 5_000, // 5 seconds
 };
 
+export interface compileData {
+  compile: {
+    stdout: string,
+    stderr: string,
+  },
+  run: {
+    stdout: string,
+    stderr: string,
+  },
+  error: string,
+}
+
 export async function compile(
     rawContent: string,
     optimizationLevel: string,
     options: string[]
-) {
-    let data = {
+): Promise<compileData> {
+    let data: compileData = {
         compile: { stdout: "", stderr: "" },
         run: { stdout: "", stderr: "" },
         error: "",
     };
 
+    // check if type is correct
+    if (typeof rawContent !== "string") {
+      data.error = "invalid_input";
+      data.compile.stderr = "Invalid content type";
+      return data;
+    }
     // limit file size
-    if (!rawContent || typeof rawContent !== "string") {
+    if (!rawContent) {
         data.error = "invalid_input";
         data.compile.stderr = "No code provided";
         return data;

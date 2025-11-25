@@ -2,6 +2,9 @@ import { error, fail } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import type { Actions } from "./$types";
 import type { compileData } from "../../api/compiler/compilecpp";
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+
+const db = drizzle(process.env.DATABASE_URL);
 
 
 export interface EditorData {
@@ -86,13 +89,8 @@ export const actions = {
   },
 } satisfies Actions;
 
-function padExistsInDatabase(pad: string): boolean {
-  return true;
-}
 
-function getEditorData(padName: string): EditorData {
-  // TODO: fetch data from database
-  // default behaviour
+function getDefaultEditorData(padName: string): EditorData {
   return {
     title: padName.charAt(0).toLocaleUpperCase() + padName.slice(1), // hello -> Hello
     editorContent: `#include <iostream>
@@ -105,10 +103,24 @@ int main() {
   };
 }
 
+
+function padExistsInDatabase(pad: string): boolean {
+  return true;
+}
+
+function getEditorData(padName: string): EditorData {
+  // TODO: fetch data from database
+  // default behaviour
+  return getDefaultEditorData(padName);
+}
+
 export const load: PageServerLoad = ({ params }) => {
   // console.log(params.pad);
 
-  if (!padExistsInDatabase(params.pad)) error(404, "Pad Not Found"); // TODO: change this to create  default pad instead
+  if (!padExistsInDatabase(params.pad)) {
+    const data = getDefaultEditorData(params.pad);
+    return data;
+  }; // TODO: change this to create  default pad instead
 
   const data = getEditorData(params.pad);
 

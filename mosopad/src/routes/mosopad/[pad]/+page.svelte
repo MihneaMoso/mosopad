@@ -3,34 +3,47 @@
     import { beforeNavigate } from "$app/navigation";
     import { onMount } from "svelte";
     import type { PageProps } from "./$types";
-    import { content } from "../../../stores/content";
+    import { content, setPad, getPad, getDefaultEditorData } from "../../../stores/content";
+    
     let { data, form }: PageProps = $props();
 
     let editorContainer: HTMLElement;
     let editor: any;
 
+    const padName = data.title;
     
-    console.log("Data:", data);
-
-    // Initialize from store if available, otherwise from server data
-    let compilerOptions = $state($content.compilerOptions || data.compilerOptions.slice(1).join(" "));
-    let optimizationLevel = $state($content.optimizationLevel || data.compilerOptions[0]);
-    let selectedLanguage = $state($content.selectedLanguage || data.language);
-    let textareaContent = $state($content.textareaContent || (data.editorContent ?? ""));
+    // Get existing pad data or use server data as fallback
+    const existingPad = getPad(padName);
+    
+    let compilerOptions = $state(
+        existingPad?.compilerOptions ?? data.compilerOptions.slice(1).join(" ")
+    );
+    let optimizationLevel = $state(
+        existingPad?.optimizationLevel ?? data.compilerOptions[0]
+    );
+    let selectedLanguage = $state(
+        existingPad?.selectedLanguage ?? data.language
+    );
+    let textareaContent = $state(
+        existingPad?.textareaContent ?? data.editorContent ?? ""
+    );
     let lastSavedContent = $state(textareaContent);
-    let compilationOutput = $state($content.compilationOutput || "");
-    let error = $state($content.error || "");
+    let compilationOutput = $state(existingPad?.compilationOutput ?? "");
+    let error = $state(existingPad?.error ?? "");
 
     const dirty = $derived(textareaContent !== lastSavedContent);
 
-    // Sync state changes back to store
+    // Sync state changes back to store for this specific pad
     $effect(() => {
-        $content.compilationOutput = compilationOutput;
-        $content.compilerOptions = compilerOptions;
-        $content.error = error;
-        $content.selectedLanguage = selectedLanguage;
-        $content.optimizationLevel = optimizationLevel;
-        $content.textareaContent = textareaContent;
+        setPad(padName, {
+            padName,
+            compilerOptions,
+            optimizationLevel,
+            selectedLanguage,
+            textareaContent,
+            compilationOutput,
+            error,
+        });
     });
 
     onMount(async () => {

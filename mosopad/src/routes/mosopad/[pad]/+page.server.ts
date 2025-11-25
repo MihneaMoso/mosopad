@@ -4,7 +4,7 @@ import type { Actions } from "./$types";
 import type { compileData } from "../../api/compiler/compilecpp";
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
-const db = drizzle(process.env.DATABASE_URL);
+// const db = drizzle(process.env.DATABASE_URL);
 
 
 export interface EditorData {

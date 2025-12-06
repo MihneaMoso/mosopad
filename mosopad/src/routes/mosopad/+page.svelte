@@ -41,11 +41,11 @@
     </form>
 
     <h2>
-        Or <a href="/signup">create an account</a>
+        Or <a href="/">create an account</a> <!-- TODO: replace with /signup later -->
     </h2>
     
     <h2>
-        Or <a href="/login">login</a>
+        Or <a href="/">login</a> <!-- TODO: replace with /login later -->
     </h2>
 </main>
 
